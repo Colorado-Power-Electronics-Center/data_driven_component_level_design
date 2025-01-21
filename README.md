@@ -1,5 +1,5 @@
 # Public_Component_Level_Power_Designer
-Combined repository for code related to the LM component-level data-driven power designer project
+Combined repository for the code related to the component-level data-driven power designer
 
 	1. Dataset: 
 		a. Scraped off Digi-key
