@@ -79,23 +79,29 @@ Combined repository for the code related to the component-level data-driven powe
 
     Instructions for use: main_script.py walkthrough
     Note: the steps are listed in __main__.
+    
     1. Data scraping: 
         Description: This is the code to get data from the main page websites of components. Different starting URLs are
         needed for the different components used in the design. 
+	
         The main function to get to is full_pdf_part_info_xl. This function goes to the starting main page, then downloads
         all the table data available by automating the click on the 'download table' button on the site.
+	
         full_pdf_part_info(): get the actual tables of downloaded information. The data that is provided
         is the pdf link as well as all the main page information, gotten from automating the click to 'download table' on the site. 
         Note where this scraping function ends, is commented
         out but is clear where to stop. Put a breakpoint here and terminate. All downloaded tables is in a .csv in the default directory
         xl_pdf_sets/. 
+	
         combine_downloaded_tables(): Go through all files in xl_pdf_sets, and combine onto one giant .csv, for ease of 
         going through later. Put onto xl_pdf_sets/merged_component_list_files.csv.
+	
         full_pdf_part_info_xl(): If want to actually go into each of the pdfs, uncomment the part after 'actual scraping process'
         to go into scrape_datasheet_tables(). Here, combine onto the main list overall_datasheet_lists as a list of lists: 
         looks like [[Mfr_part_no1, [main_page_table_info1], df_of_scraped_pdf_info_tables1],[2],[3]]. Can select if want to
         do with or without pdf info, if not will have an empty list of df_of_scraped_pdf_info_tables. The final step here
         is to pickle overall_datasheets_lists onto xl_pdf_sets/pickled_data_no_sheets or xl_pdf_sets/pickled_datasheets.
+	
         find_t_rr(): Now unpickle the overall_datasheets_lists and go through each component, trying to find the actual
         numerical values of the pdf quantities via the df's of all the scraped pdf pages. Currently these pickled files
         are on xl_pdf_sets/pickled_datasheets2. Create a DigikeyFet_downloaded object, where all attributes are put onto.
@@ -106,13 +112,17 @@ Combined repository for the code related to the component-level data-driven powe
         Go through trials of potential ways different manufacturers represent the information. Watch out for scraping false
         information. At the end, each component_obj is put onto csv_files/FET_pdf_tables_wt_rr_full.csv using single_fet_to_csv_downloaded().   
         FET_pdf_tables_wt_rr_full.csv is the final file for this section. 
+	
         For inductors, a similar process can be used, except there are no pdfs that need to be opened, even though the
         datasheet links will still be scraped. Currently, an older version of the scraping process was used to get inductor 
         information, which is found on inductor_training_updatedAlgorithm.csv after being passed through Bailey's parameter
         estimation script.
+	
         For capacitors, A similar scraping process can be used. 
         full_df_part_info(): Make sure to input the new starting link. Everything will once again be put into xl_pdf_sets/.
+	
         combine_downloaded_tables(): Make sure component = 'cap'. Put onto xl_pdf_sets/merged_capacitor_list_files.csv.
+	
         full_pdf_part_info_xl(): Set component = 'cap', and once again create a list of 
         [[Mfr_part_no1, [main_page_table_info1], df_of_scraped_pdf_info_tables1],[2],[3]]. Put onto xl_pdf_sets/pickled_data_capacitors_no_sheets.
         This is the last file needed before cleaning.
@@ -122,11 +132,14 @@ Combined repository for the code related to the component-level data-driven powe
         Description: This section goes through the data and puts the data into objects with attributes easily used for
         computations such as ML model training. Ensures numerical values. This function starts in main_script.py and 
         is called data_cleaning().
+	
         Transistors: In data_cleaning_full(), comment out capacitor_cleaning(). Open csv_files/FET_pdf_tables_wt_rr_full.csv.
         Parse the data using initial_fet_parse(), then go through and find additional pdf parameter quantities more cleanly
         (the first part only finds the code snippet with the right value, this part specifically cleans it). Put the 
         cleaned fet data onto cleaned_fet_dataset2.
+	
         Inductors: Most of this cleaning is done in Bailey's script.
+	
         Capacitors: In data_cleaning_full(), uncomment capacitor_cleaning(). 
         The first part of this function is taking the numerical information manually gathered on some capacitors showing
         the capacitance at various Vdc values, and putting this data onto datasheet_graph_info/capacitor_pdf_data_cleaned.csv.
@@ -145,24 +158,29 @@ Combined repository for the code related to the component-level data-driven powe
         IGSE estimation based on Bailey's updated algorithm. Capacitors: Capacitance relationship between 0Vdc and other
         Vdc values.
         Inside main_script.py, go to physics_based_groupings(). 
+	
         FETs:
         kT: Ron_plotting(): Select a specific grouping by setting grouping = 'group'. The dictionary values_dict has 
         all the components with their voltage rating and ratio kT of Ron at 20 deg. C divided by Ron at 0 deg. C (reported).
         When plotting these for a given grouping, use np.polyfit() to get a,b, which will give the values for the kT dictionary
         showing the linear equations. These values are used in kt_compute(), kT_eqn_dict.
+	
         Coss,0.1: Coss_plotting(): Set the grouping by setting grouping = 'group'. Shows lists with the following order
         of entries: [voltage rating [V], Coss value [pF] at 10% voltage, Vdss at Coss reported measurement [V], Coss reported measurement [pF]].
         Use this data to plot normalized values, and get these slopes for each grouping. These a,b coefficients are used
         as the linear equations in gamma_compute().
+	
         tau_c, tau_rr: These are found separately, most of the work is in fet_optimization_chained_wCaps.py. Qrr_est_new()
         shows taking the datasheet quantities of Qrr_ds, trr_ds, and IF_ds to compute tau_c and tau_rr. In the other direction,
         Can check that everything is working via Qrr_test_case() in __main__, where we set the specific tau_c, tau_rr, and
         then compute Qrr, trr for use in the loss equation. Prior to training, calls are made to Qrr_est_new() to get
         all the tau_c, tau_rr values for each real components. Inside the tool, the tool itself makes calls to these functions given predictions
         of tau_c and tau_rr to get Qrr, trr.
+	
         Inductors: 
         All of the parameters needed for compute_Rac() and compute_IGSE() inside the optimization tool are determined
         via Bailey's functions.
+	
         Capacitors: 
         Cap.@0Vdc: These predictions are a function of cap. voltage rating, cap. area, and nominal capacitance. The datapoints
         of the delta_C vs. Vdc are found in capacitor_pdf_data.csv, listed as [Label (see Mathematica doc esr_size_freq_cap_data.nb
@@ -182,6 +200,7 @@ Combined repository for the code related to the component-level data-driven powe
         to score models, and various ML model algorithms can be commented or uncommented. Uncomment the specified line 
         towards the end to dump the trained models onto the specified joblib file. There is also commented-out code beneath
         for comparing the testing performance with the performance on the training data itself.
+	
         Transistors:
         Inside train_all(), set parameter_training = 'main_page_params' or 'pdf_params'. The first few steps are generally
         the same, with slightly different parameters considered and datasets used. The first step removes
@@ -193,22 +212,27 @@ Combined repository for the code related to the component-level data-driven powe
         FET technology and channel type. Finally, the fet_training() function is used to train the three separate parameter 
         sets: main page, pdf params, and area. These three parameters are specified in the retrain_parameter argument of 
         fet_training(). The df should be supplied for this function. 
+	
         main page parameters: After doing the above three main first steps, there are three different retrain parameters that 
         must be gone through to have all necessary joblib files currently used by the tool: FOMs (which is the main
         page general data), area (which is the KNN area predictions), and initialization (which is to get the initial
         estimates for the optimization parameters, and takes a slightly different set of inputs). 
             main page general data: If retrain_parameter == 'FOMs', go into reg_score_and_dump_cat() with the specified 
             inputs and outputs.
+	    
             area prediction: If retrain_param == 'area', will go into area_training(). Dump the trained models onto 
             'full_dataset_Pack_case.joblib'.
+	    
             initialization: If retrain_parameter == 'initialization', go into reg_score_and_dump_cat() and get starting 
             predictions for Rds as a function of other variables. 
+	    
         pdf parameters: After doing the above three main first steps, also have some additional GaN data here for Coss and
         Vds,meas measurements. Also have some additional Qrr, IF, diFdt, and trr data a little farther down for transistors.
         Could also add any additional pdf datasheet data here if want to add that manually. The next new thing is computing 
         tau_c and tau_rr for all datapoints. This is done here by making a call to Qrr_est_new(). Dump this new file with
         available info onto 'cleaned_fet_dataset_pdf_params3'. Finally, go into fet_training() w/ arguments
         retrain_params = 'FOMs' and training_params = 'pdf_params'.
+	
         Inductors: 
         main page/Steinmetz parameters, and initialization: Farther down in train_all() is a line for csv_file = 'csv_files/inductor_training_updatedAlgorithm.csv'.
         From this point, the Pareto-front is taken, and then into two reg_score_and_dump_cat() calls. The first has 
@@ -216,6 +240,7 @@ Combined repository for the code related to the component-level data-driven powe
         The second has trainin_params = 'fsw_initialization', which makes an initial prediction for L that can be used
         as a starting point estimate for fsw, one of the optimization variables. To get the delta_i initial guess, can use 
         the predicted quantities along with additional calculations.
+	
         Capacitors: 
         Main page parameters: Inside main_script.py -> ML_model_training() -> train_all(), uncomment capacitor_cleaning().
         Inside here, note only 5 Class II temperature coefficients are included. Note that cap. @ 0Vdc is one of the inputs.
@@ -237,19 +262,24 @@ Combined repository for the code related to the component-level data-driven powe
         dictionary can be adjusted for different test cases, and as part of this, the user specifies their desired
         topology. At the end of this section ("Run the optimization tool") is more detail on how to create different
         topology cases.
+	
         loss_comparison_plotting() takes the dictionary param_dict and runs the optimization. 
         There are 4 OptimizerInit object functions that must be declared by the designer. In the codebase, all 4 functions
         are found right after another. 
+	
         The first is OptimizerInit.get_params(). In this function, set the initially known design variables for the specific 
         design example and topology (e.g. Vin, Vout, Iout, Vdss, etc.)
+	
         The second is OptimizerInit.set_optimization_variables(). Set what component attribute each of the optimization 
         variables corresponds to, and set topology-specific initialization equations based off these variables. e.g.:
         self.fet1.Rds = x[0], self.fet2.Rds = x[1]. And then e.g. self.cap1.Capacitance = ..., self.ind1.deltaB = ...
+	
         The third is OptimizerInit.create_component_lists(). Create objects for each component the user wants in their design, 
         and add to an overall list of each component type. The user must index their components corresponding to their 
         topology block diagram. e.g. self.fet1 = OptimizerFet(param_dict, 0), self.fet2 = OptimizerFet(param_dict, 1).
         And, self.fet_list.extend([self.fet1, self.fet2]), etc.
-        The fourt is OptimizerInit.power_pred_tot(). Compute all physics-based loss modeling parameters, and define the power
+	
+        The fourth is OptimizerInit.power_pred_tot(). Compute all physics-based loss modeling parameters, and define the power
         loss function for the topology given the created component objects. e.g. self.fet2.Compute_Cdsq(), then self.fet1.Rds_loss = ,
         then Q1_loss = self.fet1.Rds_loss + self.fet1.Qg_loss, then self.power_tot = self.Q1_loss + self.Q2_loss.
     
@@ -258,6 +288,7 @@ Combined repository for the code related to the component-level data-driven powe
         can be changed. Makes a call to optimizer_obj.create_component_lists(), which has three separate object possibilities, OptimizerFet for fets,
         OptimizerInd for inductors, and OptimizerCap for capacitors. For buck converter, considering 5 components:
         Q1 and Q2, the inductor, and the input and output capacitors. 
+	
         If want to check cases for various plotting constraint values, which is a common occurence such as getting the 
         optimized power loss values for multiple cost constraints, set optimizer_obj.plot_range_list. optimizer_obj
         stays the overall object of use, but some of the object_obj attributes are reset with each iteration of
@@ -265,29 +296,37 @@ Combined repository for the code related to the component-level data-driven powe
         optimizer_obj.MOSFET_overall_points_list. The entire optimizer_obj for each specific cost and area and FET tech 
         constraint are pickled, 'optimizer_test_values_MOSFET_overall_points' as one example.
         Initializes values for all fet, ind, and cap objects, and sets the optimization variables.
+	
         The main optimization function is found in optimizer_obj.minimize_fcn(). Inside minimize_fcn(), starts with
         con_cobyla, which is a dictionary of the constraints and bounds needed for the selected optimization algorithm,
         COBYLA. Various other constrained, bounded, multi-variate optimization algorithms exist, and would follow a similar structure, but 
         each has slightly different structure requirements. 
+	
         Next, initialize all variables using obj.init_fet(), obj.init_ind(), and obj.init_cap(). 
         These functions use the pre-trained initialization models for all components, based on known quantities at the
         start of the optimization, and generate initial starting values for all of the optimization variables.
+	
         Then set the optimization
         variables in the desired format of COBYLA: self.x0, a list of all the optimization variables, and make sure they match
         the actual object attributes as expected.
+	
         Next, predict all component parameters based on the initialized optimization variables and other known quantities
         about the design, using obj.predict_fet(), obj.predict_ind(), and obj.predict_cap(). These functions use the
         pre-trained models on component parameters.
+	
         Now the minimize function is used from the scipy.optimize package, imported at the top. See scipy.optimize
         documentation for more information on the arguments. Here is where method='COBYLA' is specified, and the
         constraints=con_cobyla are set, in addition to other parameters that can contribute to successful convergence.
         The first argument is the function to be minimized, and the second argument is the starting values of all
         optimization quantities. The first argument would be adjusted if the designer wants to minimize e.g. cost instead
         of power loss. con_cobyla would then have to be adjusted to match any desired constraints.
+	
         cost function: self.cost_pred_tot(). First the algorithm checks that the constraints are met. The cost function runs
         through all components and sums their cost, returning the total.
+	
         area function: self.area_pred_tot(). The other constraint (in the current example) is the area. The area function
         runs through all components and sums their area, returning the total.
+	
         power loss function: self.power_pred_tot(). Makes predictions based on the latest updated values of the optimization
         variables, for each of the components. Then computes all physics-based loss-related quantities, e.g. Cdsq and
         Qrr, trr. Once all quantities have been generated, everything is needed for power loss computation. Goes through
@@ -313,6 +352,7 @@ Combined repository for the code related to the component-level data-driven powe
         Then have a variety of functions that can be implemented (this part of the code could be cleaned up so that you
         don't have to uncomment the functions you want, could instead specify function arguments for each function call).
         optimization_case.filter_components(): Create predictor objects (fet_predictor, ind_predictor, etc.). 
+	
         First, case.database_df_filter(). Here, using df.normalize_x(), score each component. A normalized scoring method is used to 
         take each parameter and see how close or far below it is
         from what the tool determined to be optimal. Then these scores are summed, and the top n components are selected.
@@ -322,11 +362,13 @@ Combined repository for the code related to the component-level data-driven powe
         other components and therefor the specific combination. The exception is inductors. These loss-related quantities
         are computed up-front, and used to determine which is best. This function returns the database as a df of the top
         n components.
+	
         Second, case.compute_loss_equations(). All this does is turn each object from the dataframe into a list easily used 
         for the matrix reduction of optimal combinations. Because we cannot compute all power loss equations for all 
         components prior to knowing the combinations, we are only setting up the lists here for some components, but for
         inductors there is a call to compute_Rac() and compute_IGSE(). After doing that, the database is filtered, and 
         compute_loss_equations_final() is what turns the list into a list for use in the matrix calculations.
+	
         Third, after filtering the components, is case.optimize_combinations(). This creates meshgrids of all of the
         component databases, and 1. sums the costs and areas and check that they meet constraints, 2. checks that the output
         capacitance meets the requirement, 3. computes total power loss with component_combo.compute_total_power(), 
@@ -378,7 +420,9 @@ Component selection: The code for selecting components given the results from th
     real, commercially available components after running the exhaustive search with a set n choices per component database 
     (major function here is make_component_predictions_bf()). Include this function in __main__() of 
     component_selection_case_statements.py and run __main__().
+    
     The second process can be used to compare the selected component combination with the theoretical values from the ML-based
     step. The compare_combinations() function also needs the dict_index updates, as well as the set_combo_dict,
     in order to specify which design they are running, and which components they intend to use.
+    
     To run, the user goes to __main__() and runs.
