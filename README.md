@@ -57,7 +57,7 @@ Combined repository for the code related to the component-level data-driven powe
 			i. Transistor predictions of Qg, tau_c, tau_rr Coss0.1, Cost, Area as outputs, with Vdss, Ron, FET type as inputs
 			ii. Inductor predictions of Rdc, Area, Height, Cost, Steinmetz parameters as outputs, with Current rating, Saturated current, Inductance (from fsw) as inputs
 			iii. Capacitor predictions of Cost, Area
-			iv. Uses kernel-ridge chained regression as the base model, KNN for area
+			iv. Uses kernel-ridge chained regression as the base model
 	  		Note: prediction results similar across algorithms, could just combine into kernel ridge, linear, KNN, RF, etc. without significant change in performance accuracy
 
 	5. Optimization tool:
@@ -69,7 +69,8 @@ Combined repository for the code related to the component-level data-driven powe
 		f. COBYLA optimization algorithm, which handles multivariables, constraints/bounds, and adjustable convergence metrics
 
   	6. Brute force optimization:
-   		a. Scoring system: Using component parameters returned by tool, determine which components are closest or farthest less than by using normalization metric (x-x_opt)/x_max --> Note no absolute value
+   		a. Scoring system: Using component parameters returned by tool, determine which components are closest or farthest less than by using normalization metric (x-x_opt)/x_max --> Note no absolute 
+                   value
 		b. Based on desired run-time, select n top components from database of each component in design
   		c. Run the brute-force optimization using the x components n-length component databases and same loss equations as in the tool
     	d. Select desired component combination from returned results
@@ -84,14 +85,14 @@ Combined repository for the code related to the component-level data-driven powe
         Description: This is the code to get data from the main page websites of components. Different starting URLs are
         needed for the different components used in the design. 
 	
-        The main function to get to is full_pdf_part_info_xl. This function goes to the starting main page, then downloads
-        all the table data available by automating the click on the 'download table' button on the site.
+        i) full_pdf_part_info_xl. This function goes to the starting main page, then downloads
+        all the table data available by automating the click on the 'download table' button on the site. Here, 'table' is defined as the
+	array of information from as sites like Digikey present it. 
 	
-        full_pdf_part_info(): get the actual tables of downloaded information. The data that is provided
-        is the pdf link as well as all the main page information, gotten from automating the click to 'download table' on the site. 
-        Note where this scraping function ends, is commented
-        out but is clear where to stop. Put a breakpoint here and terminate. All downloaded tables is in a .csv in the default directory
-        xl_pdf_sets/. 
+        ii) full_pdf_part_info(): Opens the pdf and turns the data into tables of information. The data that is provided to the function
+        is the pdf link as well as all the main page information. 
+        Note where this scraping function ends, for ease of use, one could put a breakpoint here and terminate the function if the only
+	goal was to scrape data. All downloaded tables are in a .csv in the default directory xl_pdf_sets/. 
 	
         combine_downloaded_tables(): Go through all files in xl_pdf_sets, and combine onto one giant .csv, for ease of 
         going through later. Put onto xl_pdf_sets/merged_component_list_files.csv.
