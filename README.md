@@ -284,33 +284,34 @@ Note: the steps are listed in __main__.
         topology. At the end of the ReadMe is more detail on how to run the tool for a user who simply wishes to use the frontend tool,
 	rather than change the backend code.
 	
-        loss_comparison_plotting() is the main function, which takes the dictionary param_dict and runs the optimization. See  
-        There are 4 OptimizerInit object functions that must be declared by the designer. In the codebase, all 4 functions
-        are found right after another. 
-	
-        The first is OptimizerInit.get_params(). In this function, set the initially known design variables for the specific 
+        loss_comparison_plotting() is the main function, which takes the dictionary param_dict and runs the optimization. See 'INSTRUCTIONS
+	FOR FRONTEND CODE' for the details on what separate template functions must be declared by the designer prior to using the tool.
+
+	4 major important functions:
+ 
+        1) OptimizerInit.get_params(): In this function, set the initially known design variables for the specific 
         design example and topology (e.g. Vin, Vout, Iout, Vdss, etc.)
 	
-        The second is OptimizerInit.set_optimization_variables(). Set what component attribute each of the optimization 
+        2) OptimizerInit.set_optimization_variables(): Set what component attribute each of the optimization 
         variables corresponds to, and set topology-specific initialization equations based off these variables. e.g.:
         self.fet1.Rds = x[0], self.fet2.Rds = x[1]. And then e.g. self.cap1.Capacitance = ..., self.ind1.deltaB = ...
 	
-        The third is OptimizerInit.create_component_lists(). Create objects for each component the user wants in their design, 
+        3) OptimizerInit.create_component_lists(): Create objects for each component the user wants in their design, 
         and add to an overall list of each component type. The user must index their components corresponding to their 
         topology block diagram. e.g. self.fet1 = OptimizerFet(param_dict, 0), self.fet2 = OptimizerFet(param_dict, 1).
         And, self.fet_list.extend([self.fet1, self.fet2]), etc.
 	
-        The fourth is OptimizerInit.power_pred_tot(). Compute all physics-based loss modeling parameters, and define the power
+        4) OptimizerInit.power_pred_tot(): Compute all physics-based loss modeling parameters, and define the power
         loss function for the topology given the created component objects. e.g. self.fet2.Compute_Cdsq(), then self.fet1.Rds_loss = ,
         then Q1_loss = self.fet1.Rds_loss + self.fet1.Qg_loss, then self.power_tot = self.Q1_loss + self.Q2_loss.
     
         Once all of these are set up, the tool starts with the OptimizerInit object optimizer_obj. From here, runs through various fet 
         technologies (Si, GaN, SiC) cases based on what is in optimizer_obj.tech_list and assumes N-channel FETs, this
         can be changed. Makes a call to optimizer_obj.create_component_lists(), which has three separate object possibilities, OptimizerFet for fets,
-        OptimizerInd for inductors, and OptimizerCap for capacitors. For buck converter, considering 5 components:
+        OptimizerInd for inductors, and OptimizerCap for capacitors. For a buck converter example frequently used, 5 components are considered:
         Q1 and Q2, the inductor, and the input and output capacitors. 
 	
-        If want to check cases for various plotting constraint values, which is a common occurence such as getting the 
+        If you want to check cases for various plotting constraint values, which is a common occurence such as getting the 
         optimized power loss values for multiple cost constraints, set optimizer_obj.plot_range_list. optimizer_obj
         stays the overall object of use, but some of the object_obj attributes are reset with each iteration of
         plotting variable value and fet tech, and the results of each run are stored in lists such as 
@@ -318,52 +319,56 @@ Note: the steps are listed in __main__.
         constraint are pickled, 'optimizer_test_values_MOSFET_overall_points' as one example.
         Initializes values for all fet, ind, and cap objects, and sets the optimization variables.
 	
-        The main optimization function is found in optimizer_obj.minimize_fcn(). Inside minimize_fcn(), starts with
-        con_cobyla, which is a dictionary of the constraints and bounds needed for the selected optimization algorithm,
-        COBYLA. Various other constrained, bounded, multi-variate optimization algorithms exist, and would follow a similar structure, but 
+        optimizer_obj.minimize_fcn(): The main optimization algorithm-specific function. Inside minimize_fcn(), the process starts with
+        con_cobyla, which is a dictionary of the constraints and bounds needed for the selected optimization algorithm (currently the
+        COBYLA algorithm). Various other constrained, bounded, multi-variate optimization algorithms exist, and would follow a similar structure, but 
         each has slightly different structure requirements. 
 	
-        Next, initialize all variables using obj.init_fet(), obj.init_ind(), and obj.init_cap(). 
+        Initialize all variables using obj.init_fet(), obj.init_ind(), and obj.init_cap(). 
         These functions use the pre-trained initialization models for all components, based on known quantities at the
         start of the optimization, and generate initial starting values for all of the optimization variables.
 	
-        Then set the optimization
-        variables in the desired format of COBYLA: self.x0, a list of all the optimization variables, and make sure they match
+        Set the optimization variables in the desired format of COBYLA: self.x0 (a list of all the optimization variables). Note they need to match
         the actual object attributes as expected.
 	
         Next, predict all component parameters based on the initialized optimization variables and other known quantities
         about the design, using obj.predict_fet(), obj.predict_ind(), and obj.predict_cap(). These functions use the
         pre-trained models on component parameters.
 	
-        Now the minimize function is used from the scipy.optimize package, imported at the top. See scipy.optimize
+        Next, the minimize function min() is used from the scipy.optimize package (imported at the top of the script). See scipy.optimize
         documentation for more information on the arguments. Here is where method='COBYLA' is specified, and the
         constraints=con_cobyla are set, in addition to other parameters that can contribute to successful convergence.
         The first argument is the function to be minimized, and the second argument is the starting values of all
         optimization quantities. The first argument would be adjusted if the designer wants to minimize e.g. cost instead
-        of power loss. con_cobyla would then have to be adjusted to match any desired constraints.
-	
-        cost function: self.cost_pred_tot(). First the algorithm checks that the constraints are met. The cost function runs
+        of power loss. con_cobyla dictionary would then have to be adjusted to match any desired constraints.
+
+	First the algorithm checks that the constraints are met, and then computes the objective function. 
+ 
+ 	Three metrics considered by the tool to be the constraints and/or objective function: Cost, Area, Power loss
+  
+        1) cost function: self.cost_pred_tot(). The cost function runs
         through all components and sums their cost, returning the total.
 	
-        area function: self.area_pred_tot(). The other constraint (in the current example) is the area. The area function
+        2) area function: self.area_pred_tot(). The area function
         runs through all components and sums their area, returning the total.
 	
-        power loss function: self.power_pred_tot(). Makes predictions based on the latest updated values of the optimization
+        3) power loss function: self.power_pred_tot(). Makes predictions based on the latest updated values of the optimization
         variables, for each of the components. Then computes all physics-based loss-related quantities, e.g. Cdsq and
-        Qrr, trr. Once all quantities have been generated, everything is needed for power loss computation. Goes through
+        Qrr, trr. Once all quantities have been generated, everything is needed for power loss computation. The function goes through
         each component and computes each specific loss contribution, then sums all contributions for each component, then
         sums all components, returning the total power loss. It is desirable to break down the loss contributions within
         each component for viewing and analyzing the individual contributions after running the example, so that the entire
         optimization need not be run again.
         
-        When the algorithm has reached convergence, it will terminate and the results will be on the rescobyla object. The status
+        When the algorithm converges, it terminates and the results are stored on the rescobyla object. The status
         number will indicate whether or not the convergence was successful or not (see the algorithm documentation for 
-        specifics on what the status numbers mean). optimizer_obj.status == 1 indicates a success. Now are back in the
-        loss_comparison_plotting() function. Put the results onto lists for total power loss, cost, and area, and pickle
-        the entire optimizer_obj object to view results at any time. Following is the code for plotting the results. There
-        is also code to make the graph look nice, based on the parameters in obj,get_visualization_params().
+        specifics on what all the different status numbers mean). optimizer_obj.status == 1 indicates a success. 
+	After converging, returns back to the
+        loss_comparison_plotting() function. The results are put onto lists for total power loss, cost, and area, and
+        the entire optimizer_obj object is pickled (to view results at any time). Following the pickling code is the code for plotting the results. There
+        is also code to make the graph look visually appealing, and these visualization parameters can be changed in obj.get_visualization_params().
 
-    6. Determine real components via exhaustive search on filtered databases:
+    6. Determine real components via exhaustive search on filtered databases (__main__ --> component_prediction() ):
         Description: The final step is to select the actual components. The parameters used by the optimization algorithm
         are used to filter the database associated with each component in the design, to find components with as good or
         better parameters, and then perform an exhaustive search to find optimal component combinations. 
