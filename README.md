@@ -369,11 +369,12 @@ Note: the steps are listed in __main__.
         is also code to make the graph look visually appealing, and these visualization parameters can be changed in obj.get_visualization_params().
 
     6. Determine real components via exhaustive search on filtered databases (__main__ --> component_prediction() ):
-        Description: The final step is to select the actual components. The parameters used by the optimization algorithm
+        Description: The final step is to select the actual components from the database of real, commercially available components. 
+	The parameters used by the optimization algorithm
         are used to filter the database associated with each component in the design, to find components with as good or
-        better parameters, and then perform an exhaustive search to find optimal component combinations. 
+        better parameters, and then perform an exhaustive search to find optimal component combinations given the actual equations. 
 
-        From main_script.py, component_predictions() --> predict_components() (in component_selection.py). Unpickle the saved
+        From main_script.py, component_predictions() --> predict_components() (will enter component_selection.py). Unpickle the saved
         optimization data based on the specified constraints. Then given this object, go into make_component_predictions_bf().
         Then have a variety of functions that can be implemented (this part of the code could be cleaned up so that you
         don't have to uncomment the functions you want, could instead specify function arguments for each function call).
