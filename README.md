@@ -167,19 +167,20 @@ Combined repository for the code related to the component-level data-driven powe
 	        kT: Ron_plotting(): Select a specific grouping by setting grouping = 'group'. The dictionary values_dict has 
 	        all the components with their voltage rating and ratio kT of Ron at 20 deg. C divided by Ron at 0 deg. C (reported).
 	        When plotting these for a given grouping, use np.polyfit() to get a,b, which will give the values for the kT dictionary
-	        showing the linear equations. These values are used in kt_compute(), kT_eqn_dict.
+	        showing the linear equations. These values are used in kt_compute() and kT_eqn_dict.
 	
 	        Coss,0.1: Coss_plotting(): Set the grouping by setting grouping = 'group'. Shows lists with the following order
 	        of entries: [voltage rating [V], Coss value [pF] at 10% voltage, Vdss at Coss reported measurement [V], Coss reported measurement [pF]].
-	        Use this data to plot normalized values, and get these slopes for each grouping. These a,b coefficients are used
+	        Use this data to plot normalized values, and gets the slopes for each grouping. These a,b coefficients are used
 	        as the linear equations in gamma_compute().
 		
-	        tau_c, tau_rr: These are found separately, most of the work is in fet_optimization_chained_wCaps.py. Qrr_est_new()
-	        shows taking the datasheet quantities of Qrr_ds, trr_ds, and IF_ds to compute tau_c and tau_rr. In the other direction,
-	        Can check that everything is working via Qrr_test_case() in __main__, where we set the specific tau_c, tau_rr, and
-	        then compute Qrr, trr for use in the loss equation. Prior to training, calls are made to Qrr_est_new() to get
-	        all the tau_c, tau_rr values for each real components. Inside the tool, the tool itself makes calls to these functions given predictions
-	        of tau_c and tau_rr to get Qrr, trr.
+	        tau_c, tau_rr: These are found in an algorithm found in fet_optimization_chained_wCaps.py:
+	 		i) Qrr_est_new() takes the datasheet quantities of Qrr_ds, trr_ds, and IF_ds to compute tau_c and tau_rr. 
+    			ii) Qrr_test_case() checks that everything is working, where you set the specific tau_c, tau_rr, and
+	        	then compute Qrr, trr for use in the loss equation. Prior to training, calls are made to Qrr_est_new() to get
+	        	all the tau_c, tau_rr values for each component. 
+	  		Inside the tool, the tool itself makes calls to i) and ii) given predictions
+	        	of tau_c and tau_rr to get Qrr, trr which is used in the loss function.
 		
         Inductors: 
 	
@@ -191,53 +192,58 @@ Combined repository for the code related to the component-level data-driven powe
 	        Cap.@0Vdc: These predictions are a function of cap. voltage rating, cap. area, and nominal capacitance. The datapoints
 	        of the delta_C vs. Vdc are found in capacitor_pdf_data.csv, listed as [Label (see Mathematica doc esr_size_freq_cap_data.nb
 	        for encoded description/version), Mfr part no., Vrated, Area (w/ size code, inside functions will decode size codes
-	        into mm^2), Vdc_meas, deltaC at Vdc_meas, capacitance at 0Vdc. These points were collected manually and recorded 
+	        into mm^2), Vdc_meas, deltaC at Vdc_meas, capacitance at 0Vdc]. These points were collected manually and recorded 
 	        here to be used for training. 
 
-    4. ML model training:
-        Description: This section is where the ML model trainings occur. There are many models needed by the tool. To start,
-        go into main_script.py and run ML_model_training(). Most of the ML model training code is in fet_best_envelope.py.
-        For most parameters, it is also important to take the log10 of the data. reg_score_and_dump_cat() is the main
-        function for training models. Inside this function, param_training_dict() is a dictionary with {training_category1: 
-        {'inputs': inputs1, 'outputs': outputs1, 'file_name': filename1, 'order': order1}, {training_category2: {}}.
-        Note that 'file_name' is where the trained ML models are put onto, and that it's important that the optimization
-        tool is looking at the correct files and folders. 'order' is a numerically ascending list, necessary for the
-        chained regression multi-output method used by the tool. This has to match the number of outputs. Uses cross-validation
-        to score models, and various ML model algorithms can be commented or uncommented. Uncomment the specified line 
-        towards the end to dump the trained models onto the specified joblib file. There is also commented-out code beneath
-        for comparing the testing performance with the performance on the training data itself.
+    4. ML model training (__main__ --> ML_model_training() ):
+        Description: This section trains the various ML models used throughout the tool. 
+	Most of the ML model training code is in fet_best_envelope.py.
+        Note that it is also important to take the log10 of the data for many of the parameters. 
+	
+	reg_score_and_dump_cat(): the critical function for training models. Inside this function, 
+	param_training_dict() is a dictionary with: 
+ 	{training_category1: {'inputs': inputs1, 'outputs': outputs1, 'file_name': filename1, 'order': order1}, {training_category2: {}}.
+        	'file_name': where the trained ML models are put onto. It is important that the optimization
+        	tool is looking at the correct files and folders. 
+	 	'order': a numerically ascending list, necessary for the chained regression multi-output method used by the tool. 
+   		This has to match the number of outputs. Uses cross-validation
+        	to score models, and various ML model algorithms can be replaced (see end of function). There is also commented-out code beneath
+        	for comparing the testing performance with the performance on the training data itself.
 	
         Transistors:
-        Inside train_all(), set parameter_training = 'main_page_params' or 'pdf_params'. The first few steps are generally
-        the same, with slightly different parameters considered and datasets used. The first step removes
-        outliers using the outlier_detect() function, on the parameters in parameter_list, w.r.t. Vdss. outlier_detect()
-        is based on using the Mahalanobis distance. The second step takes the 
-        Pareto front of the data on the specified dimensions of interest. Note that there are some dimensions that should
-        not be included in the Pareto front, but that have to be specified in data_dims_keep to make sure they are retained
+        Inside train_all(), set parameter_training = 'main_page_params' or 'pdf_params'. For both options, the first few steps are similar,
+	with slightly different parameters considered and datasets used (main page or pdf). 
+ 	
+  	i) outlier_detect(): remove outliers on the parameters in parameter_list, w.r.t. Vdss. outlier_detect()
+        is based on using the Mahalanobis distance. Next, this function takes the Pareto front of the data on the specified dimensions of interest. 
+	Note that there are some dimensions that should not be included in the Pareto front, but that have to be specified in data_dims_keep to make sure they are retained
         by the dataset after taking the Pareto front. The third step uses one-hot encoding to assign variables to the 
-        FET technology and channel type. Finally, the fet_training() function is used to train the three separate parameter 
-        sets: main page, pdf params, and area. These three parameters are specified in the retrain_parameter argument of 
-        fet_training(). The df should be supplied for this function. 
+        FET technology and channel type. 
 	
-        main page parameters: After doing the above three main first steps, there are three different retrain parameters that 
-        must be gone through to have all necessary joblib files currently used by the tool: FOMs (which is the main
-        page general data), area (which is the KNN area predictions), and initialization (which is to get the initial
-        estimates for the optimization parameters, and takes a slightly different set of inputs). 
-            main page general data: If retrain_parameter == 'FOMs', go into reg_score_and_dump_cat() with the specified 
+	ii) fet_training(): trains the three separate parameter sets: main page, pdf params, and area. 
+	These three parameters are specified in the retrain_parameter argument of fet_training(). The df should be supplied for this function. 
+	
+        iii) main page parameters: After the above steps, there are three different parameters that 
+        must be trained in order to have all necessary joblib files currently used by the tool: 
+		1) FOMs (which is the main page general data)
+  		2) area
+    		3) initialization (which is to get the initial
+        	estimates for the optimization parameters, and takes a slightly different set of inputs). 
+            
+	    1) main page general data: If retrain_parameter == 'FOMs', go into reg_score_and_dump_cat() with the specified 
             inputs and outputs.
 	    
-            area prediction: If retrain_param == 'area', will go into area_training(). Dump the trained models onto 
+            2) area prediction: If retrain_param == 'area', will go into area_training(). Dump the trained models onto 
             'full_dataset_Pack_case.joblib'.
 	    
-            initialization: If retrain_parameter == 'initialization', go into reg_score_and_dump_cat() and get starting 
+            3) initialization: If retrain_parameter == 'initialization', go into reg_score_and_dump_cat() and get starting 
             predictions for Rds as a function of other variables. 
 	    
-        pdf parameters: After doing the above three main first steps, also have some additional GaN data here for Coss and
-        Vds,meas measurements. Also have some additional Qrr, IF, diFdt, and trr data a little farther down for transistors.
-        Could also add any additional pdf datasheet data here if want to add that manually. The next new thing is computing 
-        tau_c and tau_rr for all datapoints. This is done here by making a call to Qrr_est_new(). Dump this new file with
-        available info onto 'cleaned_fet_dataset_pdf_params3'. Finally, go into fet_training() w/ arguments
-        retrain_params = 'FOMs' and training_params = 'pdf_params'.
+        iv) pdf parameters: When this is set as the argument, this trains ML models on pdf parameters. The files used here also include additional GaN data with Coss and
+        Vds,meas measurements, as well as some additional Qrr, IF, diFdt, and trr data a little farther down for various transistor types.
+        You could also add any manual additional pdf datasheet data here. tau_c and tau_rr are computed here for all datapoints. This is done here by calling Qrr_est_new(). 
+	The data with this information is dumped onto 'cleaned_fet_dataset_pdf_params3'. After adding any additional data, go into fet_training() w/ arguments
+        retrain_params = 'FOMs' and training_params = 'pdf_params' to complete this training step.
 	
         Inductors: 
         main page/Steinmetz parameters, and initialization: Farther down in train_all() is a line for csv_file = 'csv_files/inductor_training_updatedAlgorithm.csv'.
