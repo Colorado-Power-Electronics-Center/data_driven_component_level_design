@@ -154,43 +154,45 @@ Combined repository for the code related to the component-level data-driven powe
 	iii) The third step re-opens the csv and parses the data using a call to initial_fet_parse(). This new df is put onto csv_files\capacitor_data.csv
  	and can then be used in ml model training.
 
-    3. Physics-based loss modeling:
-        Description: This section is where to generate quantities used for physics-based loss modeling. As described in the
-        intro description at the top of this file, the following quantities need to be estimated: fets: kT based on Vdss, 
+    3. Physics-based loss modeling (__main__ --> physics_based_groupings() ):
+        Description: This section is where the quantities used for physics-based loss modeling are generated. As described in the
+        intro description at the top of this file, the following quantities need to be estimated: Transistors: kT based on Vdss, 
         tau_c and tau_rr need to be computed based on the scraped Qrr, IF, diFdt, and trr quantities, Coss,0.1 estimation based
         on the physics-based groupings and normalized graph quantities. Inductors: Rac estimation based off matlab script,
         IGSE estimation based on Bailey's updated algorithm. Capacitors: Capacitance relationship between 0Vdc and other
         Vdc values.
-        Inside main_script.py, go to physics_based_groupings(). 
 	
-        FETs:
-        kT: Ron_plotting(): Select a specific grouping by setting grouping = 'group'. The dictionary values_dict has 
-        all the components with their voltage rating and ratio kT of Ron at 20 deg. C divided by Ron at 0 deg. C (reported).
-        When plotting these for a given grouping, use np.polyfit() to get a,b, which will give the values for the kT dictionary
-        showing the linear equations. These values are used in kt_compute(), kT_eqn_dict.
+        Transistors:
 	
-        Coss,0.1: Coss_plotting(): Set the grouping by setting grouping = 'group'. Shows lists with the following order
-        of entries: [voltage rating [V], Coss value [pF] at 10% voltage, Vdss at Coss reported measurement [V], Coss reported measurement [pF]].
-        Use this data to plot normalized values, and get these slopes for each grouping. These a,b coefficients are used
-        as the linear equations in gamma_compute().
+	        kT: Ron_plotting(): Select a specific grouping by setting grouping = 'group'. The dictionary values_dict has 
+	        all the components with their voltage rating and ratio kT of Ron at 20 deg. C divided by Ron at 0 deg. C (reported).
+	        When plotting these for a given grouping, use np.polyfit() to get a,b, which will give the values for the kT dictionary
+	        showing the linear equations. These values are used in kt_compute(), kT_eqn_dict.
 	
-        tau_c, tau_rr: These are found separately, most of the work is in fet_optimization_chained_wCaps.py. Qrr_est_new()
-        shows taking the datasheet quantities of Qrr_ds, trr_ds, and IF_ds to compute tau_c and tau_rr. In the other direction,
-        Can check that everything is working via Qrr_test_case() in __main__, where we set the specific tau_c, tau_rr, and
-        then compute Qrr, trr for use in the loss equation. Prior to training, calls are made to Qrr_est_new() to get
-        all the tau_c, tau_rr values for each real components. Inside the tool, the tool itself makes calls to these functions given predictions
-        of tau_c and tau_rr to get Qrr, trr.
-	
+	        Coss,0.1: Coss_plotting(): Set the grouping by setting grouping = 'group'. Shows lists with the following order
+	        of entries: [voltage rating [V], Coss value [pF] at 10% voltage, Vdss at Coss reported measurement [V], Coss reported measurement [pF]].
+	        Use this data to plot normalized values, and get these slopes for each grouping. These a,b coefficients are used
+	        as the linear equations in gamma_compute().
+		
+	        tau_c, tau_rr: These are found separately, most of the work is in fet_optimization_chained_wCaps.py. Qrr_est_new()
+	        shows taking the datasheet quantities of Qrr_ds, trr_ds, and IF_ds to compute tau_c and tau_rr. In the other direction,
+	        Can check that everything is working via Qrr_test_case() in __main__, where we set the specific tau_c, tau_rr, and
+	        then compute Qrr, trr for use in the loss equation. Prior to training, calls are made to Qrr_est_new() to get
+	        all the tau_c, tau_rr values for each real components. Inside the tool, the tool itself makes calls to these functions given predictions
+	        of tau_c and tau_rr to get Qrr, trr.
+		
         Inductors: 
-        All of the parameters needed for compute_Rac() and compute_IGSE() inside the optimization tool are determined
-        via Bailey's functions.
+	
+	        All of the parameters needed for compute_Rac() and compute_IGSE() inside the optimization tool are determined
+	        via Bailey's functions.
 	
         Capacitors: 
-        Cap.@0Vdc: These predictions are a function of cap. voltage rating, cap. area, and nominal capacitance. The datapoints
-        of the delta_C vs. Vdc are found in capacitor_pdf_data.csv, listed as [Label (see Mathematica doc esr_size_freq_cap_data.nb
-        for encoded description/version), Mfr part no., Vrated, Area (w/ size code, inside functions will decode size codes
-        into mm^2), Vdc_meas, deltaC at Vdc_meas, capacitance at 0Vdc. These points were collected manually and recorded 
-        here to be used for training. 
+	
+	        Cap.@0Vdc: These predictions are a function of cap. voltage rating, cap. area, and nominal capacitance. The datapoints
+	        of the delta_C vs. Vdc are found in capacitor_pdf_data.csv, listed as [Label (see Mathematica doc esr_size_freq_cap_data.nb
+	        for encoded description/version), Mfr part no., Vrated, Area (w/ size code, inside functions will decode size codes
+	        into mm^2), Vdc_meas, deltaC at Vdc_meas, capacitance at 0Vdc. These points were collected manually and recorded 
+	        here to be used for training. 
 
     4. ML model training:
         Description: This section is where the ML model trainings occur. There are many models needed by the tool. To start,
