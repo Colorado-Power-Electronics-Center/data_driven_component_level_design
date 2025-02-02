@@ -111,9 +111,9 @@ Combined repository for the code related to the component-level data-driven powe
         are on xl_pdf_sets/pickled_datasheets2. Creates a DigikeyFet_downloaded object, and all attributes are put onto this object.
         Inside this function the designer can adjust how to find the desired information (e.g. if they were searching for an additional
 	parameter within the pdf information, they could add lines here). Note the edge cases and the differences bw manufacturers regarding
-        where certain values can be found. This part will also require some iteration--that is why another file version
-        to look at is pickled_datasheets_from218, which helps to only look at a few components, and start checking cases.
-        Go through trials of potential ways different manufacturers represent the information. Watch out for scraping false
+        where certain values can be found. This part also requires some iteration and work--a testing file version exists
+        called pickled_datasheets_from218, which contains only a few components, and you can add components to this list to look at test
+	cases easily and check cases. Watch out for scraping false
         information. At the end, each component_obj is put onto csv_files/FET_pdf_tables_wt_rr_full.csv using single_fet_to_csv_downloaded().   
         FET_pdf_tables_wt_rr_full.csv is the final file for this section. 
 	
@@ -123,36 +123,36 @@ Combined repository for the code related to the component-level data-driven powe
         estimation script.
 	
         For capacitors, A similar scraping process can be used. 
-        full_df_part_info(): Make sure to input the new starting link. Everything will once again be put into xl_pdf_sets/.
+        i) full_df_part_info(): Make sure to input the new starting link for capacitors. Everything will once again be put into xl_pdf_sets/.
 	
-        combine_downloaded_tables(): Make sure component = 'cap'. Put onto xl_pdf_sets/merged_capacitor_list_files.csv.
+        ii) combine_downloaded_tables(): Make sure component = 'cap'. Put onto xl_pdf_sets/merged_capacitor_list_files.csv.
 	
-        full_pdf_part_info_xl(): Set component = 'cap', and once again create a list of 
+        iii) full_pdf_part_info_xl(): Sets component = 'cap', and once again creates a list of 
         [[Mfr_part_no1, [main_page_table_info1], df_of_scraped_pdf_info_tables1],[2],[3]]. Put onto xl_pdf_sets/pickled_data_capacitors_no_sheets.
         This is the last file needed before cleaning.
         
 
-    2. Data cleaning:
-        Description: This section goes through the data and puts the data into objects with attributes easily used for
-        computations such as ML model training. Ensures numerical values. This function starts in main_script.py and 
-        is called data_cleaning().
+    2. Data cleaning (__main__ --> data_cleaning() ):
+        Description: This section goes through the data and cleans it, ultimately putting the data into objects with attributes easily used for
+        computations such as ML model training. Ensures all quantities are numerical values. 
 	
-        Transistors: In data_cleaning_full(), comment out capacitor_cleaning(). Open csv_files/FET_pdf_tables_wt_rr_full.csv.
-        Parse the data using initial_fet_parse(), then go through and find additional pdf parameter quantities more cleanly
-        (the first part only finds the code snippet with the right value, this part specifically cleans it). Put the 
+        Transistors: In data_cleaning_full(), opens csv_files/FET_pdf_tables_wt_rr_full.csv.
+        Parses the data using initial_fet_parse(), then goes through and finds additional pdf parameter quantities more cleanly
+        (the first part of the scraping process, as listed in find_trr() above, only finds the code snippet with the right value, the second part specifically cleans it). Puts the 
         cleaned fet data onto cleaned_fet_dataset2.
 	
         Inductors: Most of this cleaning is done in Bailey's script.
 	
-        Capacitors: In data_cleaning_full(), uncomment capacitor_cleaning(). 
-        The first part of this function is taking the numerical information manually gathered on some capacitors showing
-        the capacitance at various Vdc values, and putting this data onto datasheet_graph_info/capacitor_pdf_data_cleaned.csv.
-        Include the area of the capacitor, as this is relevant training info. This will later be used in a separate ML
+        Capacitors: In data_cleaning_full() --> capacitor_cleaning(). 
+        i) The first part of this function takes the numerical information manually gathered on a subset of capacitors with
+        the capacitance at various Vdc values, and puts this data onto datasheet_graph_info/capacitor_pdf_data_cleaned.csv.
+        The area of the capacitor also has to be included because this is relevant training info. This will later be used in a separate ML
         model training to get the predictions of cap @ Vdc based on cap @ 0Vdc.
-        The next part is to clean the scraped capacitor main page information. Open xl_pdf_sets/pickled_data_capacitors_no_sheets.
-        Then for each line, create a DigikeyCap_downloaded object with all of the capacitor attributes.    
-        As an interim step, write data to csv_files/capacitor_data_class2_extended.csv. The next step is re-opening this
-        csv and parsing the data using a call to initial_fet_parse(). This new df is put onto csv_files\capacitor_data.csv.
+        ii) The second part cleans the scraped capacitor main page information. Opens xl_pdf_sets/pickled_data_capacitors_no_sheets.
+        Then for each line, creates a DigikeyCap_downloaded object with all of the capacitor attributes.    
+        As an interim step, this function writes the data to csv_files/capacitor_data_class2_extended.csv. 
+	iii) The third step re-opens the csv and parses the data using a call to initial_fet_parse(). This new df is put onto csv_files\capacitor_data.csv
+ 	and can then be used in ml model training.
 
     3. Physics-based loss modeling:
         Description: This section is where to generate quantities used for physics-based loss modeling. As described in the
