@@ -81,7 +81,7 @@ Combined repository for the code related to the component-level data-driven powe
     Instructions for use: main_script.py walkthrough
     Note: the steps are listed in __main__.
     
-    1. Data scraping: 
+    1. Data scraping (__main__ --> data_scraping() ): 
         Description: This is the code to get data from the main page websites of components. Different starting URLs are
         needed for the different components used in the design. 
 	
@@ -94,20 +94,23 @@ Combined repository for the code related to the component-level data-driven powe
         Note where this scraping function ends, for ease of use, one could put a breakpoint here and terminate the function if the only
 	goal was to scrape data. All downloaded tables are in a .csv in the default directory xl_pdf_sets/. 
 	
-        combine_downloaded_tables(): Go through all files in xl_pdf_sets, and combine onto one giant .csv, for ease of 
-        going through later. Put onto xl_pdf_sets/merged_component_list_files.csv.
+        iii) combine_downloaded_tables(): Goes through all files in xl_pdf_sets/ folder, and combines onto one giant .csv (to make it easier
+	to iterate through later). Puts all of the component tables under their respective mft part no. label, onto the file 
+        xl_pdf_sets/merged_component_list_files.csv.
 	
-        full_pdf_part_info_xl(): If want to actually go into each of the pdfs, uncomment the part after 'actual scraping process'
-        to go into scrape_datasheet_tables(). Here, combine onto the main list overall_datasheet_lists as a list of lists: 
-        looks like [[Mfr_part_no1, [main_page_table_info1], df_of_scraped_pdf_info_tables1],[2],[3]]. Can select if want to
-        do with or without pdf info, if not will have an empty list of df_of_scraped_pdf_info_tables. The final step here
-        is to pickle overall_datasheets_lists onto xl_pdf_sets/pickled_data_no_sheets or xl_pdf_sets/pickled_datasheets.
+        iv) full_pdf_part_info_xl(): If you want to actually go into each of the pdfs (sometimes useful for seeing what data is read in),
+	uncomment the section after the functions listed in i)-iii),
+        to enter scrape_datasheet_tables(). This function takes all of the scraped components and creates a list of lists stored in
+	overall_datasheet_lists. 
+        The list entries look like: [[Mfr_part_no1, [main_page_table_info1], df_of_scraped_pdf_info_tables1],[2],[3]].
+	The final step in this function is to pickle overall_datasheets_lists onto xl_pdf_sets/pickled_data_no_sheets (if there is no pdf 
+ 	information) or xl_pdf_sets/pickled_datasheets (if there is pdf information).
 	
-        find_t_rr(): Now unpickle the overall_datasheets_lists and go through each component, trying to find the actual
-        numerical values of the pdf quantities via the df's of all the scraped pdf pages. Currently these pickled files
-        are on xl_pdf_sets/pickled_datasheets2. Create a DigikeyFet_downloaded object, where all attributes are put onto.
-        Inside this function is flexible for the designer to adjust how to find the desired information, and where code would
-        be placed to find and keep additional parameters. Note the edge cases and the differences bw manufacturers as to
+        v) find_t_rr(): This function unpickles the overall_datasheets_lists and goes through each component, trying to find the actual
+        numerical values of the pdf quantities via the dataframes (dfs) of all the scraped pdf pages. Currently these pickled files
+        are on xl_pdf_sets/pickled_datasheets2. Creates a DigikeyFet_downloaded object, and all attributes are put onto this object.
+        Inside this function the designer can adjust how to find the desired information (e.g. if they were searching for an additional
+	parameter within the pdf information, they could add lines here). Note the edge cases and the differences bw manufacturers regarding
         where certain values can be found. This part will also require some iteration--that is why another file version
         to look at is pickled_datasheets_from218, which helps to only look at a few components, and start checking cases.
         Go through trials of potential ways different manufacturers represent the information. Watch out for scraping false
