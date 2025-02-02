@@ -1,6 +1,8 @@
 # Public_Component_Level_Power_Designer
 Combined repository for the code related to the component-level data-driven power designer
 
+PARTS OF THE TOOL:
+
 	1. Dataset: 
 		a. Scraped off Digi-key
 		b. Component information on Si, SiC, GaN transistors, inductors, and capacitors
@@ -73,13 +75,13 @@ Combined repository for the code related to the component-level data-driven powe
                    value
 		b. Based on desired run-time, select n top components from database of each component in design
   		c. Run the brute-force optimization using the x components n-length component databases and same loss equations as in the tool
-    	d. Select desired component combination from returned results
+    		d. Select desired component combination from returned results
 		e. Use printing functions to print all parameters of optimized components and selected components
     		Note: For model estimation methods, same approach is used as in the optimization tool
       		Note: To get as good a loss estimation as possible, brute-force method only looks at component databases with all parameters available
 
-    Instructions for use: main_script.py walkthrough
-    Note: the steps are listed in __main__.
+INSTRUCTIONS FOR BACKEND CODE: main_script.py walkthrough
+Note: the steps are listed in __main__.
     
     1. Data scraping (__main__ --> data_scraping() ): 
         Description: This is the code to get data from the main page websites of components. Different starting URLs are
@@ -223,59 +225,66 @@ Combined repository for the code related to the component-level data-driven powe
 	ii) fet_training(): trains the three separate parameter sets: main page, pdf params, and area. 
 	These three parameters are specified in the retrain_parameter argument of fet_training(). The df should be supplied for this function. 
 	
-        iii) main page parameters: After the above steps, there are three different parameters that 
-        must be trained in order to have all necessary joblib files currently used by the tool: 
-		1) FOMs (which is the main page general data)
-  		2) area
-    		3) initialization (which is to get the initial
-        	estimates for the optimization parameters, and takes a slightly different set of inputs). 
-            
-	    1) main page general data: If retrain_parameter == 'FOMs', go into reg_score_and_dump_cat() with the specified 
-            inputs and outputs.
+	        a) main page parameters: After the above steps, there are three different parameters that 
+	        must be trained in order to have all necessary joblib files currently used by the tool: 
+			1) FOMs (which is the main page general data)
+	  		2) area
+	    		3) initialization (which is to get the initial
+	        	estimates for the optimization parameters, and takes a slightly different set of inputs). 
+	            
+		    1) main page general data: If retrain_parameter == 'FOMs', go into reg_score_and_dump_cat() with the specified 
+	            inputs and outputs.
+		    
+	            2) area prediction: If retrain_param == 'area', will go into area_training(). Dump the trained models onto 
+	            'full_dataset_Pack_case.joblib'.
+		    
+	            3) initialization: If retrain_parameter == 'initialization', go into reg_score_and_dump_cat() and get starting 
+	            predictions for Rds as a function of other variables. 
 	    
-            2) area prediction: If retrain_param == 'area', will go into area_training(). Dump the trained models onto 
-            'full_dataset_Pack_case.joblib'.
-	    
-            3) initialization: If retrain_parameter == 'initialization', go into reg_score_and_dump_cat() and get starting 
-            predictions for Rds as a function of other variables. 
-	    
-        iv) pdf parameters: When this is set as the argument, this trains ML models on pdf parameters. The files used here also include additional GaN data with Coss and
-        Vds,meas measurements, as well as some additional Qrr, IF, diFdt, and trr data a little farther down for various transistor types.
-        You could also add any manual additional pdf datasheet data here. tau_c and tau_rr are computed here for all datapoints. This is done here by calling Qrr_est_new(). 
-	The data with this information is dumped onto 'cleaned_fet_dataset_pdf_params3'. After adding any additional data, go into fet_training() w/ arguments
-        retrain_params = 'FOMs' and training_params = 'pdf_params' to complete this training step.
+	        b) pdf parameters: When this is set as the argument, this trains ML models on pdf parameters. The files used here also include additional GaN data with Coss and
+	        Vds,meas measurements, as well as some additional Qrr, IF, diFdt, and trr data a little farther down for various transistor types.
+	        You could also add any manual additional pdf datasheet data here. tau_c and tau_rr are computed here for all datapoints. This is done here by calling Qrr_est_new(). 
+		The data with this information is dumped onto 'cleaned_fet_dataset_pdf_params3'. After adding any additional data, go into fet_training() w/ arguments
+	        retrain_params = 'FOMs' and training_params = 'pdf_params' to complete this training step.
 	
         Inductors: 
-        main page/Steinmetz parameters, and initialization: Farther down in train_all() is a line for csv_file = 'csv_files/inductor_training_updatedAlgorithm.csv'.
-        From this point, the Pareto-front is taken, and then into two reg_score_and_dump_cat() calls. The first has 
-        training_params = 'inductor_params', which has all the inductor main page information and Steinmetz parameters.
-        The second has trainin_params = 'fsw_initialization', which makes an initial prediction for L that can be used
-        as a starting point estimate for fsw, one of the optimization variables. To get the delta_i initial guess, can use 
-        the predicted quantities along with additional calculations.
+        	a) main page/Steinmetz parameters
+	 
+	 	b) initialization
+   
+   		Farther down in train_all() is a line for csv_file = 'csv_files/inductor_training_updatedAlgorithm.csv'.
+	        From this point, the Pareto-front is taken, and then two calls are made to reg_score_and_dump_cat() to train 1) and 2). The first has 
+	        training_params = 'inductor_params', which has all the inductor main page information and Steinmetz parameters.
+	        The second has trainin_params = 'fsw_initialization', which makes an initial prediction for L that can be used
+	        as a starting point estimate for fsw, one of the optimization variables. To get the delta_i initial guess, can use 
+	        the predicted quantities along with additional calculations.
 	
         Capacitors: 
-        Main page parameters: Inside main_script.py -> ML_model_training() -> train_all(), uncomment capacitor_cleaning().
-        Inside here, note only 5 Class II temperature coefficients are included. Note that cap. @ 0Vdc is one of the inputs.
-        After Pareto optimizing, send to reg_score_and_dump_cat() w/ training_params == 'cap_main_page_params'.
-        Initialization: Right below the main page parameters call to reg_score_and_dump(), uncomment the line that is
-        a call to reg_score_and_dump_cat() w/ training_params == 'cap_area_initialization'.
-        Cap.@0Vdc: Right after the code sending the main page info for training via reg_score_and_dump_cat(), which takes
-        a separate dataset with all the capacitance, delta C, and voltage info and sends to be trained with 
-        training_params == 'cap_pdf_params'.
+        	a) Main page parameters: Inside main_script.py -> ML_model_training() -> train_all() -> capacitor_cleaning().
+	        Inside here, note only 5 Class II temperature coefficients are included. Note that cap. @ 0Vdc is one of the inputs.
+	        After Pareto optimizing, calls to reg_score_and_dump_cat() w/ training_params == 'cap_main_page_params'.
+	 
+	        b) Initialization: Right below the main page parameters call to reg_score_and_dump(), go to the line that is
+	        a call to reg_score_and_dump_cat() w/ training_params == 'cap_area_initialization'.
+        
+		c) Cap.@0Vdc: This code is found right after the code sending the main page info for training via reg_score_and_dump_cat(). 
+  		Makes another call to reg_score_and_dump_cat() with training_params == 'cap_pdf_params', using
+	        a separate dataset with all the capacitance, delta C, and voltage info.
+	 
         At this point, all ML models needed by the tool have been trained.
 
-    5. Run the optimization tool:
-        Description: This section has the code for the build of the optimization tool to take the design information for
-        the desired topology and determine optimal parameters according to the optimization algorithm. In main_script.py,
+    5. Run the optimization tool (__main__ --> optimize_converter() ):
+        Description: This section has the code for the build of the optimization tool. The tool takes information about the design and
+        the desired topology and determines optimal parameters according to the optimization algorithm. In main_script.py,
         this code is found in optimize_converter(), but it can also be useful to go straight to __main__ of
         fet_optimization_chained_wCaps.py to run through specific cases for the tool.
-        Note that in optimize_converter() is code for plotting the optimized parameters, which can be a useful visualization.
-        From optimize_converter(), takes into function where user can specify dictionary of design parameters. This 
+        Note that in optimize_converter() there is code for plotting the optimized parameters, which can be a useful visualization.
+        Inside optimize_converter(), the user can specify dictionary of design parameters. This 
         dictionary can be adjusted for different test cases, and as part of this, the user specifies their desired
-        topology. At the end of this section ("Run the optimization tool") is more detail on how to create different
-        topology cases.
+        topology. At the end of the ReadMe is more detail on how to run the tool for a user who simply wishes to use the frontend tool,
+	rather than change the backend code.
 	
-        loss_comparison_plotting() takes the dictionary param_dict and runs the optimization. 
+        loss_comparison_plotting() is the main function, which takes the dictionary param_dict and runs the optimization. See  
         There are 4 OptimizerInit object functions that must be declared by the designer. In the codebase, all 4 functions
         are found right after another. 
 	
@@ -399,6 +408,8 @@ Combined repository for the code related to the component-level data-driven powe
 
         Finally, optimizer_fsw(). This takes the selected components and runs through a generated list of potential
         switching frequencies, and sees which one gives the lowest power loss given the selected inductor.
+
+INSTRUCTIONS FOR FRONTEND CODE
 
 Running the tool: The code has been structured such that the user does not need to enter the tool codebase or adjust the functions 
     of the tool itself in order to run their design. In order to create a new design, the user must go to 
