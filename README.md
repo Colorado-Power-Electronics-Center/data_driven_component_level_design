@@ -374,13 +374,14 @@ Note: the steps are listed in __main__.
         are used to filter the database associated with each component in the design, to find components with as good or
         better parameters, and then perform an exhaustive search to find optimal component combinations given the actual equations. 
 
-        From main_script.py, component_predictions() --> predict_components() (will enter component_selection.py). Unpickle the saved
-        optimization data based on the specified constraints. Then given this object, go into make_component_predictions_bf().
-        Then have a variety of functions that can be implemented (this part of the code could be cleaned up so that you
-        don't have to uncomment the functions you want, could instead specify function arguments for each function call).
-        optimization_case.filter_components(): Create predictor objects (fet_predictor, ind_predictor, etc.). 
+        From main_script.py, component_predictions() --> predict_components() (will enter component_selection.py). First, the saved
+        optimization data for the design is unpickled and the object containing all the information is used here. 
+	The function uses this object inside make_component_predictions_bf().
+        Then there are a variety of functions that can be implemented, as follows:
 	
-        First, case.database_df_filter(). Here, using df.normalize_x(), score each component. A normalized scoring method is used to 
+        1) optimization_case.filter_components(): Create predictor objects (fet_predictor, ind_predictor, etc.). 
+	
+        2) case.database_df_filter(): Here, using df.normalize_x(), score each component. A normalized scoring method is used to 
         take each parameter and see how close or far below it is
         from what the tool determined to be optimal. Then these scores are summed, and the top n components are selected.
         The value of n determines the total run-time for this step, where higher n results in better power loss performance,
@@ -390,16 +391,19 @@ Note: the steps are listed in __main__.
         are computed up-front, and used to determine which is best. This function returns the database as a df of the top
         n components.
 	
-        Second, case.compute_loss_equations(). All this does is turn each object from the dataframe into a list easily used 
+        3) case.compute_loss_equations(): All this does is turn each object from the dataframe into a list easily used 
         for the matrix reduction of optimal combinations. Because we cannot compute all power loss equations for all 
         components prior to knowing the combinations, we are only setting up the lists here for some components, but for
         inductors there is a call to compute_Rac() and compute_IGSE(). After doing that, the database is filtered, and 
         compute_loss_equations_final() is what turns the list into a list for use in the matrix calculations.
 	
-        Third, after filtering the components, is case.optimize_combinations(). This creates meshgrids of all of the
-        component databases, and 1. sums the costs and areas and check that they meet constraints, 2. checks that the output
-        capacitance meets the requirement, 3. computes total power loss with component_combo.compute_total_power(), 
-        4. sorts the power losses from lowest to highest, and prints all the manufacturer part numbers in order. Note that
+        4) after filtering the components, is case.optimize_combinations(). This creates meshgrids of all of the
+        component databases, and 
+		1. sums the costs and areas and check that they meet constraints, 
+  		2. checks that the output
+        capacitance meets the requirement, 
+		3. computes total power loss with component_combo.compute_total_power(), 
+        	4. sorts the power losses from lowest to highest, and prints all the manufacturer part numbers in order. Note that
         specific components can be listed by mfr part no. in lists 'unavailable_fets, unavailable_inds, etc.', so that if
         a specific component is not available (usually inductors), it can be skipped over.
 
@@ -412,7 +416,7 @@ Note: the steps are listed in __main__.
         breakdown given those components. The next code block prints the parameters of each component based on what the
         tool returned, and then the next code block prints all of the theoretical loss contributions.
 
-        Finally, optimizer_fsw(). This takes the selected components and runs through a generated list of potential
+        5) optimizer_fsw(). This takes the selected components and runs through a generated list of potential
         switching frequencies, and sees which one gives the lowest power loss given the selected inductor.
 
 INSTRUCTIONS FOR FRONTEND CODE
