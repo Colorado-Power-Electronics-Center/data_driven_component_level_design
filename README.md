@@ -305,68 +305,72 @@ Note: the steps are listed in __main__.
         loss function for the topology given the created component objects. e.g. self.fet2.Compute_Cdsq(), then self.fet1.Rds_loss = ,
         then Q1_loss = self.fet1.Rds_loss + self.fet1.Qg_loss, then self.power_tot = self.Q1_loss + self.Q2_loss.
     
-        Once all of these are set up, the tool starts with the OptimizerInit object optimizer_obj. From here, runs through various fet 
-        technologies (Si, GaN, SiC) cases based on what is in optimizer_obj.tech_list and assumes N-channel FETs, this
-        can be changed. Makes a call to optimizer_obj.create_component_lists(), which has three separate object possibilities, OptimizerFet for fets,
-        OptimizerInd for inductors, and OptimizerCap for capacitors. For a buck converter example frequently used, 5 components are considered:
+        Once all of these are set up, the tool starts with the OptimizerInit object optimizer_obj. From here, the tool runs through various fet 
+        technologies (Si, GaN, SiC) cases based on what is in optimizer_obj.tech_list and assumes N-channel FETs (this
+        can be changed). Makes a call to optimizer_obj.create_component_lists(), which has three separate object possibilities: OptimizerFet for fets,
+        OptimizerInd for inductors, and OptimizerCap for capacitors. For the buck converter example, 5 components are considered:
         Q1 and Q2, the inductor, and the input and output capacitors. 
+
+ 	Important functions and objects, as seen in order of appearance when the tool is run:
 	
-        If you want to check cases for various plotting constraint values, which is a common occurence such as getting the 
-        optimized power loss values for multiple cost constraints, set optimizer_obj.plot_range_list. optimizer_obj
-        stays the overall object of use, but some of the object_obj attributes are reset with each iteration of
+        i) optimizer_obj.plot_range_list: Set this if you want to check cases for various plotting constraint values, which is a common occurence such as getting the 
+        optimized power loss values at multiple cost constraints.
+	
+	ii) optimizer_obj stays the overall object of use, but some of the object_obj attributes are reset with each iteration of
         plotting variable value and fet tech, and the results of each run are stored in lists such as 
         optimizer_obj.MOSFET_overall_points_list. The entire optimizer_obj for each specific cost and area and FET tech 
-        constraint are pickled, 'optimizer_test_values_MOSFET_overall_points' as one example.
-        Initializes values for all fet, ind, and cap objects, and sets the optimization variables.
+        constraint are pickled, e.g. the objective function values could be 'optimizer_test_values_MOSFET_overall_points'.
+        The optimization varaibles and fet, ind, and cap objects are stored on optimizer_obj. 
 	
-        optimizer_obj.minimize_fcn(): The main optimization algorithm-specific function. Inside minimize_fcn(), the process starts with
+        iii) optimizer_obj.minimize_fcn(): The main optimization algorithm-specific function. Inside minimize_fcn(), the process starts with
         con_cobyla, which is a dictionary of the constraints and bounds needed for the selected optimization algorithm (currently the
         COBYLA algorithm). Various other constrained, bounded, multi-variate optimization algorithms exist, and would follow a similar structure, but 
         each has slightly different structure requirements. 
 	
-        Initialize all variables using obj.init_fet(), obj.init_ind(), and obj.init_cap(). 
+        iv) obj.init_fet(), obj.init_ind(), and obj.init_cap(): Initialize all variables using these functions. 
         These functions use the pre-trained initialization models for all components, based on known quantities at the
         start of the optimization, and generate initial starting values for all of the optimization variables.
 	
-        Set the optimization variables in the desired format of COBYLA: self.x0 (a list of all the optimization variables). Note they need to match
-        the actual object attributes as expected.
+        v) self.x0 (a list of all the optimization variables):  Set the optimization variables in the desired format of COBYLA. Note they need to match
+        the actual object attributes that the functions they are used by would expect, e.g. proper order of magnitude.
 	
-        Next, predict all component parameters based on the initialized optimization variables and other known quantities
-        about the design, using obj.predict_fet(), obj.predict_ind(), and obj.predict_cap(). These functions use the
-        pre-trained models on component parameters.
+        vi) obj.predict_fet(), obj.predict_ind(), and obj.predict_cap(): Next, use these functions to predict all component parameters based on the initialized optimization variables and other known quantities
+        about the design. These functions use the pre-trained models trained on component parameters.
 	
-        Next, the minimize function min() is used from the scipy.optimize package (imported at the top of the script). See scipy.optimize
+        vii) min(): Next, the minimize function is used from the scipy.optimize package (imported at the top of the script). See scipy.optimize
         documentation for more information on the arguments. Here is where method='COBYLA' is specified, and the
         constraints=con_cobyla are set, in addition to other parameters that can contribute to successful convergence.
         The first argument is the function to be minimized, and the second argument is the starting values of all
-        optimization quantities. The first argument would be adjusted if the designer wants to minimize e.g. cost instead
+        optimization quantities. The first argument would need be adjusted if the designer wants to minimize e.g. cost instead
         of power loss. con_cobyla dictionary would then have to be adjusted to match any desired constraints.
 
-	First the algorithm checks that the constraints are met, and then computes the objective function. 
+	viii) First the algorithm checks that the constraints are met, and then computes the objective function. 
  
- 	Three metrics considered by the tool to be the constraints and/or objective function: Cost, Area, Power loss
+ 	ix) Three metrics considered by the tool to be the constraints and/or objective function: Cost, Area, Power loss.
   
-        1) cost function: self.cost_pred_tot(). The cost function runs
-        through all components and sums their cost, returning the total.
-	
-        2) area function: self.area_pred_tot(). The area function
-        runs through all components and sums their area, returning the total.
-	
-        3) power loss function: self.power_pred_tot(). Makes predictions based on the latest updated values of the optimization
-        variables, for each of the components. Then computes all physics-based loss-related quantities, e.g. Cdsq and
-        Qrr, trr. Once all quantities have been generated, everything is needed for power loss computation. The function goes through
-        each component and computes each specific loss contribution, then sums all contributions for each component, then
-        sums all components, returning the total power loss. It is desirable to break down the loss contributions within
-        each component for viewing and analyzing the individual contributions after running the example, so that the entire
-        optimization need not be run again.
+	        1) cost function: self.cost_pred_tot(). The cost function runs
+	        through all components and sums their cost, returning the total.
+		
+	        2) area function: self.area_pred_tot(). The area function
+	        runs through all components and sums their area, returning the total.
+		
+	        3) power loss function: self.power_pred_tot(). Makes predictions based on the latest updated values of the optimization
+	        variables, for each of the components. Then computes all physics-based loss-related quantities, e.g. Cdsq and
+	        Qrr, trr. Once all quantities have been generated, everything is needed for power loss computation. The function goes through
+	        each component and computes each specific loss contribution, then sums all contributions for each component, then
+	        sums all components, returning the total power loss. It is desirable to break down the loss contributions within
+	        each component for viewing and analyzing the individual contributions after running the example, so that the entire
+	        optimization need not be run again.
         
-        When the algorithm converges, it terminates and the results are stored on the rescobyla object. The status
+        x) rescobyla object: When the algorithm converges, it terminates and the results are stored on this object. The status
         number will indicate whether or not the convergence was successful or not (see the algorithm documentation for 
         specifics on what all the different status numbers mean). optimizer_obj.status == 1 indicates a success. 
 	After converging, returns back to the
         loss_comparison_plotting() function. The results are put onto lists for total power loss, cost, and area, and
-        the entire optimizer_obj object is pickled (to view results at any time). Following the pickling code is the code for plotting the results. There
-        is also code to make the graph look visually appealing, and these visualization parameters can be changed in obj.get_visualization_params().
+        the entire optimizer_obj object is pickled (to view results at any time). 
+	
+ 	xi) obj.get_visualization_params(): Following the pickling code is the code for plotting the results and making 
+	the graph look visually appealing, and these visualization parameters can be changed in obj.get_visualization_params().
 
     6. Determine real components via exhaustive search on filtered databases (__main__ --> component_prediction() ):
         Description: The final step is to select the actual components from the database of real, commercially available components. 
