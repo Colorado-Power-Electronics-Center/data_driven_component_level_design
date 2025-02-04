@@ -423,46 +423,46 @@ Note: the steps are listed in __main__.
         5) optimizer_fsw(). This takes the selected components and runs through a generated list of potential
         switching frequencies, and returns the frequency that gives the lowest power loss given the selected components.
 
-INSTRUCTIONS FOR FRONTEND CODE
+INSTRUCTIONS FOR FRONTEND CODE: separate templates walkthrough
 
-Running the tool: The code has been structured such that the user does not need to enter the tool codebase or adjust the functions 
-    of the tool itself in order to run their design. In order to create a new design, the user must go to 
-    optimization_tool_case_statements.py and go to __main__() and then do the following:
-    1. Add desired info to param_dict showing what kind of design runs to do.
-    2. Update the following functions, adding case statements for the desired topology and operating conditions:
-        i. get_params_separate()
-        ii. set_optimization_variables_separate()
-        iii. create_component_lists_separate()
-        iv. power_pred_tot_separate()
-        Additional functions that can be updated are:
-        i. print_unnormalized_results()
-    Descriptions of each function are included in the code as well as in step 5. of this README doc. Once these functions have been updated, the user runs __main__()
-    inside optimization_tool_case_statements.py.
+	Running the tool: The code has been structured such that the user does not need to enter the tool codebase or adjust the functions 
+	    of the tool itself in order to run their design. In order to create a new design, the user must go to 
+	    optimization_tool_case_statements.py and go to __main__() and then do the following:
+	    1. Add desired info to param_dict showing what kind of design runs to do.
+	    2. Update the following functions, adding case statements for the desired topology and operating conditions:
+	        i. get_params_separate()
+	        ii. set_optimization_variables_separate()
+	        iii. create_component_lists_separate()
+	        iv. power_pred_tot_separate()
+	        Additional functions that can be updated are:
+	        i. print_unnormalized_results()
+	    Descriptions of each function are included in the code as well as in step 5. of this README doc. Once these functions have been updated, the user runs __main__()
+	    inside optimization_tool_case_statements.py.
 
-Component selection: The code for selecting components given the results from the ML-based step of the tool are found in
-    component_selection_case_statements.py. The user also needs to update functions here with their desired case statement for
-    their design:
-    i. set_combo_variables()
-    ii. set_inductor_attributes()
-    iii. make_oririginal_arrays()
-    iv. make_new_arrays()
-    v. make_valid_arrays()
-    vi. vectorize_equations()
-    vii. determine_norm_scored_vars()
-    Additional functions that can be updated are:
-    i. print_practical()
-    ii. print_theoretical()
-
-    Once case statements are included for these functions, there are two major processes that can be run:
-    
-    1) predict_components(): The user updates this function with their design 
-    information, then the script will pull the optimized parameters from the ML-based step, and use these to return lists of 
-    real, commercially available components after running the exhaustive search with a set n choices per component database 
-    (the major function to note here is make_component_predictions_bf()). Include predict_components() in __main__() of 
-    component_selection_case_statements.py and run __main__().
-    
-    2) compare_combinations(): This process can be used to compare the selected component combination with the theoretical values from the ML-based
-    step. To run this process, the compare_combinations() function also needs dict_index and set_combo_dict to be updated,
-    in order to specify which design they are running, and which components they intend to use, respectively.
-    
-    To run, the user goes to __main__() inside component_selection_case_statements.py and runs the script.
+	Component selection: The code for selecting components given the results from the ML-based step of the tool are found in
+	    component_selection_case_statements.py. The user also needs to update functions here with their desired case statement for
+	    their design:
+	    i. set_combo_variables()
+	    ii. set_inductor_attributes()
+	    iii. make_oririginal_arrays()
+	    iv. make_new_arrays()
+	    v. make_valid_arrays()
+	    vi. vectorize_equations()
+	    vii. determine_norm_scored_vars()
+	    Additional functions that can be updated are:
+	    i. print_practical()
+	    ii. print_theoretical()
+	
+	    Once case statements are included for these functions, there are two major processes that can be run:
+	    
+	    1) predict_components(): The user updates this function with their design 
+	    information, then the script will pull the optimized parameters from the ML-based step, and use these to return lists of 
+	    real, commercially available components after running the exhaustive search with a set n choices per component database 
+	    (the major function to note here is make_component_predictions_bf()). Include predict_components() in __main__() of 
+	    component_selection_case_statements.py and run __main__().
+	    
+	    2) compare_combinations(): This process can be used to compare the selected component combination with the theoretical values from the ML-based
+	    step. To run this process, the compare_combinations() function also needs dict_index and set_combo_dict to be updated,
+	    in order to specify which design they are running, and which components they intend to use, respectively.
+	    
+	    To run, the user goes to __main__() inside component_selection_case_statements.py and runs the script.
