@@ -125,7 +125,7 @@ Note: the steps are listed in __main__.
 	
         For inductors, a similar process can be used, except there are no pdfs that need to be opened, even though the
         datasheet links will still be scraped. Currently, an older version of the scraping process was used to get inductor 
-        information, which is found on inductor_training_updatedAlgorithm.csv after being passed through Bailey's parameter
+        information, which is found on inductor_training_updatedAlgorithm.csv after being passed through coreloss.py, the parameter
         estimation script.
 	
         For capacitors, A similar scraping process can be used. 
@@ -147,7 +147,7 @@ Note: the steps are listed in __main__.
         (the first part of the scraping process, as listed in find_trr() above, only finds the code snippet with the right value, the second part specifically cleans it). Puts the 
         cleaned fet data onto cleaned_fet_dataset2.
 	
-        Inductors: Most of this cleaning is done in Bailey's script.
+        Inductors: Most of this cleaning is done in coreloss.py.
 	
         Capacitors: In data_cleaning_full() --> capacitor_cleaning(). 
         i) The first part of this function takes the numerical information manually gathered on a subset of capacitors with
@@ -165,7 +165,7 @@ Note: the steps are listed in __main__.
         intro description at the top of this file, the following quantities need to be estimated: Transistors: kT based on Vdss, 
         tau_c and tau_rr need to be computed based on the scraped Qrr, IF, diFdt, and trr quantities, Coss,0.1 estimation based
         on the physics-based groupings and normalized graph quantities. Inductors: Rac estimation based off matlab script,
-        IGSE estimation based on Bailey's updated algorithm. Capacitors: Capacitance relationship between 0Vdc and other
+        IGSE estimation based on the updated algorithm in coreloss.py. Capacitors: Capacitance relationship between 0Vdc and other
         Vdc values.
 	
         Transistors:
@@ -191,7 +191,7 @@ Note: the steps are listed in __main__.
         Inductors: 
 	
 	        All of the parameters needed for compute_Rac() and compute_IGSE() inside the optimization tool are determined
-	        via Bailey's functions.
+	        via the functions in coreloss.py.
 	
         Capacitors: 
 	
