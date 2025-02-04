@@ -1,5 +1,9 @@
 # Public_Component_Level_Power_Designer
-Combined repository for the code related to the component-level data-driven power designer
+Combined repository for the code related to the component-level data-driven power designer.
+Split into three sections: PARTS OF THE TOOL, BACKEND CODE, FRONTEND CODE.
+Note that the data scraping must be performed to use the tool, as the scraped data is not published, and 
+subsequently the design-oriented parameters and ML models also need to be generated.
+Also note that the code instructions are published here.
 
 PARTS OF THE TOOL:
 
